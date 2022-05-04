@@ -30,6 +30,7 @@
   "dependencies": {
     "aws-cdk-lib": "^2.22.0",
     "cdk-ecr-deployment": "^2.5.1",
+    "chalk": "^4",
     "constructs": "^10.0.130"
   }
 }

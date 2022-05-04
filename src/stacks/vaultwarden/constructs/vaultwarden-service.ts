@@ -1,9 +1,11 @@
+import chalk from 'chalk'
 import * as cdk from 'aws-cdk-lib'
 import { Construct } from 'constructs'
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import * as ecs from 'aws-cdk-lib/aws-ecs'
 import * as ecspatterns from 'aws-cdk-lib/aws-ecs-patterns'
 import * as iam from 'aws-cdk-lib/aws-iam'
+import * as acm from 'aws-cdk-lib/aws-certificatemanager'
 
 import type { Cluster } from 'aws-cdk-lib/aws-ecs'
 import type { Repository } from 'aws-cdk-lib/aws-ecr'
@@ -16,6 +18,8 @@ export type VaultwardenServiceProps = {
   imageRepository: Repository
   version: string
   filesystem: FileSystem
+
+  domainName?: string
 }
 
 /**
@@ -28,6 +32,54 @@ class VaultwardenService extends Construct {
     super(scope, id)
 
     const image = ecs.ContainerImage.fromEcrRepository(props.imageRepository, props.version)
+
+    // :: If a domain name is provided, then we'll also provision an SSL certificate
+    //    for the domain to enable HTTPS on the service's load balancer.
+    //    Note that for the cert to fully deploy, it must be validated by adding the
+    //    expected DNS records to the domain.
+    //    ------------------------------------------------------------------------------
+    //    THE STACK WILL NOT FINISH DEPLOYING UNTIL THE CERTIFICATE HAS BEEN
+    //    SUCCESSFULLY VALIDATED.
+    //    ------------------------------------------------------------------------------
+    const certificate = props.domainName
+      ? new acm.Certificate(this, 'vaultwarden-service-certificate', {
+          domainName: props.domainName,
+          validation: acm.CertificateValidation.fromDns(),
+        })
+      : undefined
+
+    if (certificate) {
+      console.clear()
+      console.log(
+        [
+          '',
+          '',
+          chalk.yellowBright('=========='),
+          chalk.yellowBright('IMPORTANT:'),
+          chalk.yellowBright('=========='),
+          `You\'ve provided a domain name (${chalk.yellowBright(props.domainName)}).`,
+          'This will force your Vaultwarden service to be served via HTTPS, and an SSL certificate will be created automatically for you.',
+          '',
+          `However, the certificate creation process will need you to manually register DNS records for your domain to complete validation before it can be used.`,
+          chalk.magentaBright(
+            'This deployment will wait until your domain has been completely verified and your certificate validated before it successfully completes deployment.'
+          ),
+          '',
+          'Your certificate will be created here (requires you to log into your AWS Console):',
+          chalk.cyanBright(`https://console.aws.amazon.com/acm/home#/certificates/list`),
+          '',
+          `Once your certificate appears in the list with a ${chalk.yellowBright(
+            'Pending Validation'
+          )} status (you may need to refresh the page a few times), follow the directions to complete verification.`,
+          'The deployment will automatically continue once this has been completed.',
+          chalk.yellowBright(
+            '==========================================================================================================='
+          ),
+          '',
+          '',
+        ].join('\n')
+      )
+    }
 
     // :: This role takes effect during control plane actions re: this task,
     //    e.g. task creation during scaling events.
@@ -58,6 +110,11 @@ class VaultwardenService extends Construct {
         },
 
         publicLoadBalancer: true,
+
+        // :: If a domain name is provided (via environment variables; see `.env.sample`),
+        //    then the load balancer is switched to default to HTTPS.
+        //    An SSL certificate will automatically be provisioned as well (see above).
+        certificate,
       }
     )
 

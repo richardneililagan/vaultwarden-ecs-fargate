@@ -12,6 +12,7 @@ import VaultwardenService from './constructs/vaultwarden-service'
 
 const BASE_IMAGE_NAME = 'vaultwarden/server'
 const BASE_VERSION = process.env.VAULTWARDEN_BASE_VERSION || 'latest'
+const DOMAIN_NAME = process.env.VAULTWARDEN_DOMAIN_NAME
 
 export type VaultwardenStackProps = cdk.StackProps & {
   //
@@ -78,6 +79,7 @@ class VaultwardenStack extends cdk.Stack {
     new VaultwardenService(this, 'vaultwarden-service', {
       imageRepository: imageRepository.repository,
       version: BASE_VERSION,
+      domainName: DOMAIN_NAME,
       cluster,
       filesystem,
     })
