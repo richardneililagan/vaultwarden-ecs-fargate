@@ -4,7 +4,7 @@
   "private": true,
   "main": "index.js",
   "author": "Richard Neil Ilagan <705310+richardneililagan@users.noreply.github.com>",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "scripts": {
     "cdk": "cdk",
     "lint": "yarn lint:ts",
