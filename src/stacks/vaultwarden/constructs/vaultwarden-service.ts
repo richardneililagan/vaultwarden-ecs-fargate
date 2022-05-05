@@ -13,6 +13,28 @@ import type { FileSystem } from 'aws-cdk-lib/aws-efs'
 
 // :: ---
 
+/**
+ * Filters environment variables for Vaultwarden configuration values,
+ * and creates a config digest that is meant to be passed to the Vaultwarden container.
+ *
+ * @returns A map of environment variables meant to configure the Vaultwarden container.
+ * @see {@link https://github.com/dani-garcia/vaultwarden/wiki/Configuration-overview}
+ */
+type ConfigurationDigest = { [key: string]: string }
+const _generateVaultwardenConfigurationVariables = (): ConfigurationDigest => {
+  // :: Take only the environment variables that are prefixed by `VAULTWARDEN_CONFIG_`
+  //    (and that has a value that is not undefined),
+  //    and map them to the proper key format.
+  //
+  //    e.g. `VAULTWARDEN_CONFIG_SENDS_ALLOWED=true` -> `{ SENDS_ALLOWED: 'true' }`
+  const _configEntries = Object.entries(process.env)
+    .filter(([_, value]) => value !== undefined)
+    .filter(([key]) => /^VAULTWARDEN_CONFIG_/.test(key))
+    .map(([key, value]) => [key.replace(/^VAULTWARDEN_CONFIG_/, ''), value])
+
+  return Object.fromEntries(_configEntries)
+}
+
 export type VaultwardenServiceProps = {
   cluster: Cluster
   imageRepository: Repository
@@ -104,7 +126,12 @@ class VaultwardenService extends Construct {
         cpu: 256, // :: 0.25 cpu
         memoryLimitMiB: 512,
 
-        taskImageOptions: { image, executionRole },
+        taskImageOptions: {
+          image,
+          executionRole,
+          environment: _generateVaultwardenConfigurationVariables(),
+        },
+
         taskSubnets: {
           subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
         },
