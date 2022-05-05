@@ -18,6 +18,22 @@ application system that runs Vaultwarden on your own AWS account. Using this pro
 you can deploy everything you need to run a self-hosted Vaultwarden system quickly,
 without having to manually create and deploy the system's different pieces one by one.
 
+This project aims to:
+
+1. Make it relatively simple to deploy your own self-hosted Vaultwarden instance,
+2. While keeping it as low cost as possible,
+3. While _also_ keeping the deployment as secure, resilient, and reliable as possible.
+
+While Vaultwarden is amazingly simple to run on something like Raspberry Pi or your own
+hardware, it is still terribly complex to ensure that your data survives unexpected
+disasters of any severity. (Consider: what would you have to do if your own hardware fails?)
+
+We believe the best compromise is a sort of middle ground, wherein your data resides
+in the cloud, in an environment you control, with as many security and reliability
+considerations as it is practical to ensure your data is safe and private only to you.
+
+> **TODO** Architectural considerations --- what are you exactly deploying with this?
+
 ---
 
 ## Requirements
@@ -94,6 +110,41 @@ necessary changes.
 The deployment process will automatically determine what exactly needs to be deployed,
 and make the necessary adjustments.
 
+## Configuring Vaultwarden
+
+The default settings that Vaultwarden runs in is sufficient for most general use, but
+if you want to customize some of its behavior, you can also do so.
+
+The Vaultwarden container image can be configured by passing in specific environment
+variables into it ([more info here][vaultwarden-envvars]). If you wish to explicitly
+set some of these config env vars:
+
+1. Determine which environment variable/s you want to set (e.g. `SENDS_ALLOWED=true`),
+2. Append `VAULTWARDEN_CONFIG_` to the variable name (e.g. `VAULTWARDEN_CONFIG_SENDS_ALLOWED=true`),
+3. Finally, add the key-value pair to your `.env` file, and update your deployment.
+
+For safety reasons, the deployment will only consider environment variables that are
+prefixed by `VAULTWARDEN_CONFIG_` for embedding in the container. **Note that there is no
+cross-checking done to ensure that configuration items you provide are valid.**
+
+[Refer to this document for a list of available environment variables you can set][vaultwarden-envvar-list].
+
+### Enabling the admin page
+
+Most likely, the easiest way to manage your deployment's configuration is through
+the adminstration page (disabled by default). For most configuration values, you can
+set them directly on the administration page once it's been enabled, so you don't have
+to keep them in environment variables.
+
+To enable the admin page, add the corresponding env var to `.env`, then update your
+deployment:
+
+```dotenv
+VAULTWARDEN_CONFIG_ADMIN_TOKEN=[some very long random string of your choice]
+```
+
+[More information about the admin page here][vaultwarden-admin-page].
+
 ---
 
 ## Advanced configuration
@@ -149,3 +200,6 @@ This works with or without HTTPS (but, again, enabling HTTPS is strongly recomme
 [verification]: https://console.aws.amazon.com/acm/home#/certificates/list
 [website]: https://richardneililagan.com
 [twitter]: https://twitter.com/techlifemusic
+[vaultwarden-envvars]: https://github.com/dani-garcia/vaultwarden/wiki/Configuration-overview
+[vaultwarden-envvar-list]: https://github.com/dani-garcia/vaultwarden/blob/main/.env.template
+[vaultwarden-admin-page]: https://github.com/dani-garcia/vaultwarden/wiki/Enabling-admin-page
