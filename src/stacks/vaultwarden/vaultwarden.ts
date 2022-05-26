@@ -34,10 +34,8 @@ class VaultwardenStack extends cdk.Stack {
       version: BASE_VERSION,
     })
 
-    const { vpc, ecrEndpoint, ecrRepositoryEndpoint, cloudwatchEndpoint } = new Network(
-      this,
-      'network'
-    )
+    // const { vpc, ecrEndpoint, ecrRepositoryEndpoint, cloudwatchEndpoint } = new Network(
+    const { vpc } = new Network(this, 'network')
 
     const cluster = new ecs.Cluster(this, 'vaultwarden-cluster', {
       clusterName: 'vaultwarden-cluster',
@@ -45,13 +43,13 @@ class VaultwardenStack extends cdk.Stack {
       vpc,
     })
 
-    // :: Generally, anything in the cluster will need access to both
-    //    (1) the ECR api for authorization on image pulls,
-    //    (2) the ECR repository api for the actual image pulls, and
-    //    (3) the Cloudwatch api for submitting task logs.
-    ecrEndpoint.connections.allowDefaultPortFrom(cluster)
-    ecrRepositoryEndpoint.connections.allowDefaultPortFrom(cluster)
-    cloudwatchEndpoint.connections.allowDefaultPortFrom(cluster)
+    // // :: Generally, anything in the cluster will need access to both
+    // //    (1) the ECR api for authorization on image pulls,
+    // //    (2) the ECR repository api for the actual image pulls, and
+    // //    (3) the Cloudwatch api for submitting task logs.
+    // ecrEndpoint.connections.allowDefaultPortFrom(cluster)
+    // ecrRepositoryEndpoint.connections.allowDefaultPortFrom(cluster)
+    // cloudwatchEndpoint.connections.allowDefaultPortFrom(cluster)
 
     // :: To be safe, we'll need an outsourced filesystem to serve as
     //    a persistent volume for our Vaultwarden containers.

@@ -28,8 +28,8 @@ const _generateVaultwardenConfigurationVariables = (): ConfigurationDigest => {
   //
   //    e.g. `VAULTWARDEN_CONFIG_SENDS_ALLOWED=true` -> `{ SENDS_ALLOWED: 'true' }`
   const _configEntries = Object.entries(process.env)
-    .filter(([_, value]) => value !== undefined)
-    .filter(([key]) => /^VAULTWARDEN_CONFIG_/.test(key))
+    .filter(([, value]) => value !== undefined)
+    .filter(([key]) => key.startsWith('VAULTWARDEN_CONFIG_'))
     .map(([key, value]) => [key.replace(/^VAULTWARDEN_CONFIG_/, ''), value])
 
   return Object.fromEntries(_configEntries)
@@ -133,9 +133,10 @@ class VaultwardenService extends Construct {
         },
 
         taskSubnets: {
-          subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+          subnetType: ec2.SubnetType.PUBLIC,
         },
 
+        assignPublicIp: true,
         publicLoadBalancer: true,
 
         // :: If a domain name is provided (via environment variables; see `.env.sample`),

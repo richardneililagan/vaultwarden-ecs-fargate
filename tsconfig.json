@@ -5,7 +5,8 @@
     "baseUrl": "./src",
     "paths": {
       "@/*": ["*"]
-    }
+    },
+    "esModuleInterop": true
   },
 
   "exclude": ["node_modules", "cdk.out"]
